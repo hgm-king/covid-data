@@ -1,0 +1,27 @@
+{
+  "name": "www",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "serve": "webpack-dev-server"
+  },
+  "dependencies": {
+    "d3": "^5.16.0",
+    "dataworker": "file:/Users/HG_King/Desktop/Dev/wasm-covid/www/node_modules/../../dataworker/pkg",
+    "topojson-client": "^3.1.0",
+    "viz": "file:/Users/HG_King/Desktop/Dev/wasm-covid/www/node_modules/../../viz/pkg"
+  },
+  "devDependencies": {
+    "@wasm-tool/wasm-pack-plugin": "1.0.1",
+    "text-encoding": "^0.7.0",
+    "html-webpack-plugin": "^3.2.0",
+    "webpack": "^4.29.4",
+    "webpack-cli": "^3.1.1",
+    "webpack-dev-server": "^3.1.0",
+    "copy-webpack-plugin": "^5.0.0"
+  },
+  "author": "",
+  "license": "ISC"
+}
