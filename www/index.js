@@ -9,6 +9,12 @@ import { memory } from "dataworker/dataworker_bg";
 
 const asyncWait = async (count) => new Promise(resolve => setTimeout(resolve, count? count : 1000 ));
 
+function Utf8ArrayToStr(array) {
+  let s = "";
+  array.forEach((char) => { s += String.fromCharCode(char) })
+  return s;
+}
+
 // const chartWidth = 5000;
 // const chartHeight = 5000;
 //
@@ -77,14 +83,24 @@ let data;
   const history = await Dataworker.getData(historyUrl, Filetype.JSON);
   const obj = history.to_object();
   console.log(history, obj);
-  // const width = chunk.width();
-  // const height = chunk.height();
-  // const dataPtr = chunk.data();
-  // const matrix = new Uint32Array(memory.buffer, dataPtr, width * height);
+
+
 
   const data = await Dataworker.getData(dataUrl, Filetype.CSV);
   const csv = data.to_object();
-  console.log(data, csv);
+  console.log(data.data());
+  console.log(data, csv.CsvStruct, csv.CsvStruct[0]);
+  const length = data.length();
+  const dataPtr = data.data();
+  const matrix = new Uint32Array(memory.buffer, dataPtr, length);
+  console.log(matrix, Utf8ArrayToStr(matrix));
+
+  const ptr = data.expose_key("BOROUGH_GROUP");
+  console.log(data.data(), ptr);
+  const length2 = data.length();
+  const dataPtr2 = data.data();
+  const matrix2 = new Uint32Array(memory.buffer, dataPtr2, length2);
+  console.log(matrix2, Utf8ArrayToStr(matrix2));
 
 
   var svg = d3.select("body").append("svg")

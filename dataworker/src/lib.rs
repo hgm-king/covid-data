@@ -35,57 +35,70 @@ pub struct Dataworker {
 
 #[wasm_bindgen]
 pub struct Chunk {
-    width: u32,
-    height: u32,
+    length: usize,
     data: Vec<u32>,
     active_url: String,
     text: String,
-    filetype: Filetype
+    filetype: Filetype,
+    parsed_data: DataType,
 }
 
 #[wasm_bindgen]
 impl Chunk {
     pub fn new(url: String, text: String, filetype: Filetype) -> Self {
-        let width = 64;
-        let height = 64;
 
-        let data = (0..width * height)
-            .map(|i| i * 2)
+        let data = (64..128)
+            .map(|i: u32| i)
             .collect();
 
+        let parsed_data = read(&text, &filetype).unwrap();
+        let length = 64;
+
         Chunk {
-            width,
-            height,
+            length,
             data,
             active_url: url,
             text: text,
-            filetype
+            filetype,
+            parsed_data
         }
     }
 
-    pub fn width(&self) -> u32 {
-        self.width
-    }
-
-    pub fn height(&self) -> u32 {
-        self.height
+    pub fn length(&self) -> usize {
+        self.length
     }
 
     pub fn data(&self) -> *const u32 {
         self.data.as_ptr()
     }
 
-    pub fn reset(&mut self) -> () {
-        for num in &mut self.data { *num *= 2 }
+    pub fn expose_key(&mut self, key: &str) -> *const u32 {
+        let mut data: Vec<u32> = vec![];
+        let mut count = 0;
+
+        if let DataType::CsvStruct(csv) = &self.parsed_data {
+            for record in csv {
+                let value = record.get(key).unwrap();
+                count += value.len();
+                for byte in value.to_string().bytes() {
+                    data.push(byte as u32);
+                }
+            }
+        } else {
+            // Destructure failed. Change to the failure case.
+            println!("We could not turn this into an array!");
+        }
+        self.length = count;
+        self.data = data;
+        self.data.as_ptr()
     }
 
-    pub fn to_object(&self) -> Result<JsValue, JsValue> {
-        let v = match self.filetype {
-            Filetype::JSON => read_json(&self.text).unwrap(),
-            Filetype::CSV => read_csv(&self.text).unwrap(),
-        };
+    // pub fn reset(&mut self) -> () {
+    //     for num in &mut self.data { *num *= 2 }
+    // }
 
-        Ok(JsValue::from_serde(&v).unwrap())
+    pub fn to_object(&self) -> Result<JsValue, JsValue> {
+        Ok(JsValue::from_serde(&self.parsed_data).unwrap())
     }
 }
 
@@ -104,7 +117,13 @@ impl Dataworker {
             url, text, filetype
         ))
     }
-    //
+}
+
+fn read(input: &str, filetype: &Filetype) -> Result<DataType, Box<dyn Error>> {
+    match *filetype {
+        Filetype::JSON => read_json(input),
+        Filetype::CSV => read_csv(input),
+    }
 }
 
 fn read_json(input: &str) -> Result<DataType, Box<dyn Error>> {
@@ -122,3 +141,16 @@ fn read_csv(input: &str) -> Result<DataType, Box<dyn Error>> {
     }
     Ok(DataType::CsvStruct(data))
 }
+
+// #[cfg(test)]
+// mod tests {
+//     #[test]
+//     fn test_encoding() {
+//         let data: Vec<String> = (60..128)
+//             .map(|i: u8| {
+//                 println!("{}", (i as char).to_string());
+//                 (i as char).to_string()
+//             })
+//             .collect();
+//     }
+// }
