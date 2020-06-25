@@ -13,17 +13,13 @@ use std::error::Error;
 
 use std::collections::HashMap;
 
-type JsonStruct = Value;
-
 type Record = HashMap<String, String>;
-type CsvStruct = Vec<Record>;
 
-// #[wasm_bindgen]
-// #[derive(Serialize)]
-// pub struct CsvStruct {
-//     key: String,
-//     map: Vec<Record>,
-// }
+#[derive(Serialize)]
+enum DataType {
+    JsonStruct(Value),
+    CsvStruct(Vec<Record>)
+}
 
 #[wasm_bindgen]
 pub enum Filetype {
@@ -83,12 +79,14 @@ impl Chunk {
         for num in &mut self.data { *num *= 2 }
     }
 
-    // pub fn to_object(&self) -> Result<JsValue, JsValue> {
-    //     let v = match self.type {
-    //         Filetype::JSON =>
-    //     }
-    //     Ok(JsValue::from_serde(&v).unwrap())
-    // }
+    pub fn to_object(&self) -> Result<JsValue, JsValue> {
+        let v = match self.filetype {
+            Filetype::JSON => read_json(&self.text).unwrap(),
+            Filetype::CSV => read_csv(&self.text).unwrap(),
+        };
+
+        Ok(JsValue::from_serde(&v).unwrap())
+    }
 }
 
 
@@ -109,18 +107,18 @@ impl Dataworker {
     //
 }
 
-fn read_json(input: &str) -> Result<JsonStruct, Box<dyn Error>> {
+fn read_json(input: &str) -> Result<DataType, Box<dyn Error>> {
     // Parse the string of data into serde_json::Value.
     let v: Value = serde_json::from_str(&input).unwrap();
-    Ok(v)
+    Ok(DataType::JsonStruct(v))
 }
 
-fn read_csv(input: &str) -> Result<CsvStruct, Box<dyn Error>> {
+fn read_csv(input: &str) -> Result<DataType, Box<dyn Error>> {
     let mut rdr = csv::Reader::from_reader(input.as_bytes());
-    let mut data: CsvStruct = vec![];
+    let mut data: Vec<Record> = vec![];
     for result in rdr.deserialize() {
         let record: Record = result?;
         data.push(record);
     }
-    Ok(data)
+    Ok(DataType::CsvStruct(data))
 }

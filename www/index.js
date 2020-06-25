@@ -60,8 +60,8 @@ const asyncWait = async (count) => new Promise(resolve => setTimeout(resolve, co
 
 
 const mapUrl = "https://raw.githubusercontent.com/nychealth/coronavirus-data/master/Geography-resources/MODZCTA_2010_WGS1984.geo.json";
-const dataUrl = "https://api.github.com/repos/nychealth/coronavirus-data/commits?path=data-by-modzcta.csv"
-
+const historyUrl = "https://api.github.com/repos/nychealth/coronavirus-data/commits?path=data-by-modzcta.csv";
+const dataUrl = "https://raw.githubusercontent.com/nychealth/coronavirus-data/cf508e8fe08ddff44a847c1b54209c598b88c913/data-by-modzcta.csv";
 // https://api.github.com/repos/nychealth/coronavirus-data/commits?path=data-by-modzcta.csv
 // https://raw.githubusercontent.com/nychealth/coronavirus-data/cf508e8fe08ddff44a847c1b54209c598b88c913/data-by-modzcta.csv
 
@@ -74,12 +74,18 @@ let data;
 
   const nyc = await d3.json(mapUrl);
   console.log(nyc);
-  const chunk = await Dataworker.getData(dataUrl, Filetype.JSON);
-  const width = chunk.width();
-  const height = chunk.height();
-  const dataPtr = chunk.data();
-  const matrix = new Uint32Array(memory.buffer, dataPtr, width * height);
-  console.log(chunk, );
+  const history = await Dataworker.getData(historyUrl, Filetype.JSON);
+  const obj = history.to_object();
+  console.log(history, obj);
+  // const width = chunk.width();
+  // const height = chunk.height();
+  // const dataPtr = chunk.data();
+  // const matrix = new Uint32Array(memory.buffer, dataPtr, width * height);
+
+  const data = await Dataworker.getData(dataUrl, Filetype.CSV);
+  const csv = data.to_object();
+  console.log(data, csv);
+
 
   var svg = d3.select("body").append("svg")
       .attr("width", chartWidth)
