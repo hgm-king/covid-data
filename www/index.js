@@ -3,16 +3,9 @@
 const d3 = require("d3");
 const topojson = require("topojson-client");
 
-import { Dataworker } from 'dataworker';
+import { Dataworker, Filetype } from 'dataworker';
 import { memory } from "dataworker/dataworker_bg";
 
-console.log(wasm);
-
-const dataworker = wasm.Dataworker.new();
-const width = dataworker.width();
-const height = dataworker.height();
-const dataPtr = dataworker.data();
-const matrix = new Uint32Array(memory.buffer, dataPtr, width * height);
 
 const asyncWait = async (count) => new Promise(resolve => setTimeout(resolve, count? count : 1000 ));
 
@@ -81,8 +74,12 @@ let data;
 
   const nyc = await d3.json(mapUrl);
   console.log(nyc);
-  const data = await dataworker.getData(dataUrl);
-  console.log(data);
+  const chunk = await Dataworker.getData(dataUrl, Filetype.JSON);
+  const width = chunk.width();
+  const height = chunk.height();
+  const dataPtr = chunk.data();
+  const matrix = new Uint32Array(memory.buffer, dataPtr, width * height);
+  console.log(chunk, );
 
   var svg = d3.select("body").append("svg")
       .attr("width", chartWidth)
