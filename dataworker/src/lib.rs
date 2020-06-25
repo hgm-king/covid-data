@@ -72,7 +72,53 @@ impl Chunk {
         self.data.as_ptr()
     }
 
-    pub fn expose_key(&mut self, key: &str) -> *const u32 {
+    pub fn min(&self) -> u32 {
+        match self.data.iter().min() {
+            Some(n) => *n,
+            None => 0,
+        }
+    }
+
+    pub fn max(&self) -> u32 {
+        match self.data.iter().max() {
+            Some(n) => *n,
+            None => 0,
+        }
+    }
+
+    pub fn keys(&self) -> Result<JsValue, JsValue> {
+        if let DataType::CsvStruct(csv) = &self.parsed_data {
+            let keys: Vec<String> = csv[0].keys().map(|s| s.to_string()).collect();
+            Ok(JsValue::from_serde(&keys).unwrap())
+        } else {
+            Err(JsValue::from_serde("We cannot do this").unwrap())
+        }
+    }
+
+    pub fn sort(&self, sort: Vec<u32>) -> Vec<u32> {
+        sort
+    }
+
+    pub fn expose_key_int(&mut self, key: &str) -> *const u32 {
+        let mut data: Vec<u32> = vec![];
+        let mut count = 0;
+
+        if let DataType::CsvStruct(csv) = &self.parsed_data {
+            for record in csv {
+                let value = record.get(key).unwrap();
+                count += 1;
+                data.push(value.parse().unwrap());
+            }
+        } else {
+            // Destructure failed. Change to the failure case.
+            println!("We could not turn this into an array!");
+        }
+        self.length = count;
+        self.data = data;
+        self.data.as_ptr()
+    }
+
+    pub fn expose_key_string(&mut self, key: &str) -> *const u32 {
         let mut data: Vec<u32> = vec![];
         let mut count = 0;
 
@@ -80,9 +126,10 @@ impl Chunk {
             for record in csv {
                 let value = record.get(key).unwrap();
                 count += value.len();
-                for byte in value.to_string().bytes() {
+                for byte in value.bytes() {
                     data.push(byte as u32);
                 }
+                data.push(0);
             }
         } else {
             // Destructure failed. Change to the failure case.

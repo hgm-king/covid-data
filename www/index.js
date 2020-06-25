@@ -6,6 +6,18 @@ const topojson = require("topojson-client");
 import { Dataworker, Filetype } from 'dataworker';
 import { memory } from "dataworker/dataworker_bg";
 
+const dataVizColors = [
+  '#051c2c',
+  '#034b6f',
+  '#027ab1',
+  '#00a9f4',
+  '#39bdf3',
+  '#71d2f1',
+  '#aae6f0',
+  '#3c96b4',
+  '#afc3ff',
+]
+
 
 const asyncWait = async (count) => new Promise(resolve => setTimeout(resolve, count? count : 1000 ));
 
@@ -14,6 +26,12 @@ function Utf8ArrayToStr(array) {
   array.forEach((char) => { s += String.fromCharCode(char) })
   return s;
 }
+
+// given a range of min to max where the range is divided into n segments
+// and an integer x where min <= x <= max
+// let bucket be the segment number that x is within
+const buckets = (x, min, max, n) => Math.floor((x - min) / ((max - min) / n));
+
 
 // const chartWidth = 5000;
 // const chartHeight = 5000;
@@ -78,46 +96,70 @@ let data;
 
 (async () => {
 
+  // setup the map
   const nyc = await d3.json(mapUrl);
-  console.log(nyc);
-  const history = await Dataworker.getData(historyUrl, Filetype.JSON);
-  const obj = history.to_object();
-  console.log(history, obj);
-
-
-
-  const data = await Dataworker.getData(dataUrl, Filetype.CSV);
-  const csv = data.to_object();
-  console.log(data.data());
-  console.log(data, csv.CsvStruct, csv.CsvStruct[0]);
-  const length = data.length();
-  const dataPtr = data.data();
-  const matrix = new Uint32Array(memory.buffer, dataPtr, length);
-  console.log(matrix, Utf8ArrayToStr(matrix));
-
-  const ptr = data.expose_key("BOROUGH_GROUP");
-  console.log(data.data(), ptr);
-  const length2 = data.length();
-  const dataPtr2 = data.data();
-  const matrix2 = new Uint32Array(memory.buffer, dataPtr2, length2);
-  console.log(matrix2, Utf8ArrayToStr(matrix2));
-
-
-  var svg = d3.select("body").append("svg")
+  const svg = d3.select("body").append("svg")
       .attr("width", chartWidth)
       .attr("height", chartHeight);
 
-  var path = d3.geoPath()
+  const path = d3.geoPath()
       .projection(d3.geoConicConformal()
       .parallels([33, 45])
       .rotate([96, -39])
       .fitSize([chartWidth, chartHeight], nyc));
 
-  svg.selectAll("path")
-      .data(nyc.features)
-      .enter().append("path")
-      .attr("d", path)
-      .attr("class", (d) => d.properties.MODZCTA)
-      .attr("d", path);
+  // console.log(nyc, nyc.features.map((feature) => feature.properties.MODZCTA));
+  // const history = await Dataworker.getData(historyUrl, Filetype.JSON);
+  // const obj = history.to_object();
+  // console.log(history, obj);
 
+  // Setup the data
+  const covidMapDataChunk = await Dataworker.getData(dataUrl, Filetype.CSV);
+  const headers = covidMapDataChunk.keys();
+  const draw = (header) => {
+
+    const ptr = covidMapDataChunk.expose_key_int(header);
+    const length = covidMapDataChunk.length();
+    const mapData = new Uint32Array(memory.buffer, ptr, length);
+
+    const mapDataMin = covidMapDataChunk.min();
+    const mapDataMax = covidMapDataChunk.max();
+
+    console.log(length, mapData, covidMapDataChunk.keys(), mapDataMin, mapDataMax);
+    const t = svg.transition()
+            .duration(750);
+
+    svg.selectAll("path")
+        .data(nyc.features)
+        .join(
+          enter => enter.append("path")
+              .attr("d", path)
+              .attr( "fill", (d, i) => {
+                const n = buckets(mapData[i], mapDataMin, mapDataMax, dataVizColors.length);
+                return dataVizColors[n]
+              })
+              .attr("d", path),
+          update => update
+              .attr( "fill", (d, i) => {
+                const n = buckets(mapData[i], mapDataMin, mapDataMax, dataVizColors.length);
+                return dataVizColors[n]
+              })
+              .attr("d", path),
+          exit => exit
+              .remove()
+        );
+  }
+
+  // setup the select
+  const select = document.getElementById("fields");
+  for (const val of headers) {
+    var option = document.createElement("option");
+    option.value = val;
+    option.text = val.charAt(0).toUpperCase() + val.slice(1);
+    select.appendChild(option);
+  }
+
+  select.onchange = (e) => draw(e.target.value);
+
+  draw(headers[2]);
 })();
