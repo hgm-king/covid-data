@@ -18,6 +18,28 @@ const dataVizColors = [
   '#afc3ff',
 ]
 
+const buildLegend = () => {
+  const legendId = "legend"
+
+  const min = document.createElement("span");
+  min.id = "min";
+  document.getElementById(legendId).append(min);
+
+  dataVizColors.forEach((color) => {
+    const square = document.createElement("div");
+    square.classList.add("legend-block");
+    square.style.backgroundColor = color;
+    document.getElementById(legendId).append(square);
+  });
+
+  const max = document.createElement("span");
+  max.id = "max";
+  document.getElementById(legendId).append(max);
+
+  const sum = document.createElement("span");
+  sum.id = "sum";
+  document.getElementById(legendId).append(sum);
+}
 
 const asyncWait = async (count) => new Promise(resolve => setTimeout(resolve, count? count : 1000 ));
 
@@ -94,6 +116,8 @@ const chartWidth = 960,
 
 let data;
 
+buildLegend();
+
 (async () => {
 
   // setup the map
@@ -107,6 +131,10 @@ let data;
       .parallels([33, 45])
       .rotate([96, -39])
       .fitSize([chartWidth, chartHeight], nyc));
+
+  const tooltip = svg.append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 1);
 
   // console.log(nyc, nyc.features.map((feature) => feature.properties.MODZCTA));
   // const history = await Dataworker.getData(historyUrl, Filetype.JSON);
@@ -124,10 +152,15 @@ let data;
 
     const mapDataMin = covidMapDataChunk.min();
     const mapDataMax = covidMapDataChunk.max();
+    const mapDataSum = covidMapDataChunk.sum();
 
     console.log(length, mapData, covidMapDataChunk.keys(), mapDataMin, mapDataMax);
     const t = svg.transition()
             .duration(750);
+
+    document.getElementById('min').innerText = mapDataMin;
+    document.getElementById('max').innerText = mapDataMax;
+    document.getElementById('sum').innerText = `Total: ${mapDataSum}`;
 
     svg.selectAll("path")
         .data(nyc.features)
@@ -138,7 +171,21 @@ let data;
                 const n = buckets(mapData[i], mapDataMin, mapDataMax, dataVizColors.length);
                 return dataVizColors[n]
               })
-              .attr("d", path),
+              .attr("d", path)
+              .on("mouseover", function(d) {
+                tooltip.transition()
+                .duration(200)
+                .style("opacity", .9);
+                tooltip.html(d.properties.MODZCTA)
+                // tooltip.html("HGHG")
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+              })
+              .on("mouseout", function(d) {
+                tooltip.transition()
+                .duration(500)
+                .style("opacity", 0);
+              }),
           update => update
               .attr( "fill", (d, i) => {
                 const n = buckets(mapData[i], mapDataMin, mapDataMax, dataVizColors.length);

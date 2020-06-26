@@ -86,6 +86,10 @@ impl Chunk {
         }
     }
 
+    pub fn sum(&self) -> u32 {
+        self.data.iter().fold(0, |sum, x| sum + x)
+    }
+
     pub fn keys(&self) -> Result<JsValue, JsValue> {
         if let DataType::CsvStruct(csv) = &self.parsed_data {
             let keys: Vec<String> = csv[0].keys().map(|s| s.to_string()).collect();
