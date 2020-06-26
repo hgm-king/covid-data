@@ -90,6 +90,10 @@ impl Chunk {
         self.data.iter().fold(0, |sum, x| sum + x)
     }
 
+    pub fn avg(&self) -> f32 {
+        self.sum() as f32 / self.length() as f32
+    }
+
     pub fn keys(&self) -> Result<JsValue, JsValue> {
         if let DataType::CsvStruct(csv) = &self.parsed_data {
             let keys: Vec<String> = csv[0].keys().map(|s| s.to_string()).collect();
@@ -104,21 +108,23 @@ impl Chunk {
     }
 
     pub fn expose_key_int(&mut self, key: &str) -> *const u32 {
-        let mut data: Vec<u32> = vec![];
-        let mut count = 0;
-
         if let DataType::CsvStruct(csv) = &self.parsed_data {
+            let mut i = 0;
+            let size = self.data.len() - 1;
             for record in csv {
-                let value = record.get(key).unwrap();
-                count += 1;
-                data.push(value.parse().unwrap());
+                let value = record.get(key).unwrap().parse().unwrap();
+                if i <= size {
+                    self.data[i] = value;
+                    i += 1;
+                } else {
+                    self.length += 1;
+                    self.data.push(value);
+                }
             }
         } else {
             // Destructure failed. Change to the failure case.
             println!("We could not turn this into an array!");
         }
-        self.length = count;
-        self.data = data;
         self.data.as_ptr()
     }
 
@@ -193,15 +199,8 @@ fn read_csv(input: &str) -> Result<DataType, Box<dyn Error>> {
     Ok(DataType::CsvStruct(data))
 }
 
-// #[cfg(test)]
-// mod tests {
-//     #[test]
-//     fn test_encoding() {
-//         let data: Vec<String> = (60..128)
-//             .map(|i: u8| {
-//                 println!("{}", (i as char).to_string());
-//                 (i as char).to_string()
-//             })
-//             .collect();
-//     }
-// }
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+}

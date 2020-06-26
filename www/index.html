@@ -12,14 +12,30 @@
 
       #legend {
         display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        width: 100%;
       }
-
-      
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Jost&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
   </head>
   <body id="body">
-    <select id="fields"></select>
-    <div id="legend"></div>
+
+    <main class="main">
+      <div class="header">
+        <h3>🦠NYC Covid Data🧼</h3>
+        <h6>Created by <a href="https://github.com/HGHimself">HG King</a></h6>
+      </div>
+      <div class="container">
+        <div class="left" id="data">
+          <select id="fields"></select>
+          <div id="legend"></div>
+        </div>
+        <div class="right" id="map">
+        </div>
+      </div>
+    </main>
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.subunit._</noscript>
     <script src="./bootstrap.js"></script>
   </body>
