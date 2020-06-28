@@ -100,26 +100,50 @@ buildDesc();
 
   // Setup the data
   const covidMapDataChunk = await Dataworker.getData(dataUrl, Filetype.CSV);
-  const covidMapObj = covidMapDataChunk.to_object();
+  const covidMapObj = covidMapDataChunk.to_object().CsvStruct;
   const headers = covidMapDataChunk.keys();
   let dataPointer = -1;
+  let dataLength = -1;
   let mapData = [];
-  const draw = (header) => {
 
-    const ptr = covidMapDataChunk.expose_key_int(header);
-    if ( dataPointer !== ptr )  {
+  const floats = [];
+  const strings = [];
+
+  headers.forEach((header) => {
+    if (covidMapObj[0][header].match(/[a-zA-z]/)) {
+      strings.push(header);
+    } else if(covidMapObj[0][header].match(/\./)) {
+      floats.push(header);
+    }
+  });
+
+  const draw = (header) => {
+    let ptr;
+    if (floats.includes(header))  {
+      ptr = covidMapDataChunk.expose_key_float(header);
+    } else if (strings.includes(header))  {
+      ptr = covidMapDataChunk.expose_key_string(header);
+    } else {
+      ptr = covidMapDataChunk.expose_key_int(header);
+    }
+
+    const length = covidMapDataChunk.length();
+    console.log(length, dataLength);
+    if ( dataPointer !== ptr || dataLength != length )  {
       console.log("Creating new array buffer!");
-      const length = covidMapDataChunk.length();
       mapData = new Uint32Array(memory.buffer, ptr, length);
       dataPointer = ptr;
+      dataLength = length;
     }
+
+    // mapData = mapData.map(n => covidMapDataChunk.transform(n));
 
     const mapDataMin = covidMapDataChunk.min();
     const mapDataMax = covidMapDataChunk.max();
     const mapDataSum = covidMapDataChunk.sum();
     const mapDataAvg = covidMapDataChunk.avg();
 
-    console.log(length, mapData, ptr, covidMapDataChunk.keys(), mapDataMin, mapDataMax);
+    console.log(mapData, ptr, covidMapDataChunk.keys(), mapDataMin, mapDataMax);
     const t = svg.transition()
             .duration(750);
 
@@ -143,7 +167,7 @@ buildDesc();
               .attr( "stroke", '#f0f0f0')
               .attr("d", path)
               .on("mouseover", function(d, i) {
-                const record = covidMapObj.CsvStruct[i];
+                const record = covidMapObj[i];
                 tooltip.transition()
                 .duration(200)
                 .style("opacity", .9);

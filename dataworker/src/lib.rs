@@ -38,6 +38,7 @@ pub struct Chunk {
     length: usize,
     data: Vec<u32>,
     active_url: String,
+    coefficient: u32,
     text: String,
     filetype: Filetype,
     parsed_data: DataType,
@@ -57,6 +58,7 @@ impl Chunk {
         Chunk {
             length,
             data,
+            coefficient: 1,
             active_url: url,
             text: text,
             filetype,
@@ -103,12 +105,17 @@ impl Chunk {
         }
     }
 
+    pub fn transform(&self, value: u32) -> f32 {
+        value as f32 / self.coefficient as f32
+    }
+
     pub fn sort(&self, sort: Vec<u32>) -> Vec<u32> {
         sort
     }
 
     pub fn expose_key_int(&mut self, key: &str) -> *const u32 {
         if let DataType::CsvStruct(csv) = &self.parsed_data {
+            self.coefficient = 1;
             let mut i = 0;
             let size = self.data.len() - 1;
             for record in csv {
@@ -120,6 +127,32 @@ impl Chunk {
                     self.length += 1;
                     self.data.push(value);
                 }
+            }
+        } else {
+            // Destructure failed. Change to the failure case.
+            println!("We could not turn this into an array!");
+        }
+        self.data.as_ptr()
+    }
+
+    pub fn expose_key_float(&mut self, key: &str) -> *const u32 {
+        if let DataType::CsvStruct(csv) = &self.parsed_data {
+            self.coefficient = 10;
+            self.length = 0;
+
+            let mut i = 0;
+            let size = self.data.len() - 1;
+
+            for record in csv {
+                let value: f32 = record.get(key).unwrap().parse().unwrap();
+                let value = (value * self.coefficient as f32) as u32;
+                if i <= size {
+                    self.data[i] = value;
+                    i += 1;
+                } else {
+                    self.data.push(value);
+                }
+                self.length += 1;
             }
         } else {
             // Destructure failed. Change to the failure case.
