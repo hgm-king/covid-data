@@ -41,7 +41,9 @@ pub struct Chunk {
     coefficient: u32,
     text: String,
     filetype: Filetype,
-    parsed_data: DataType,
+    selected: usize,
+    parsed_data: Vec<DataType>,
+    data_count: usize,
 }
 
 #[wasm_bindgen]
@@ -62,12 +64,18 @@ impl Chunk {
             active_url: url,
             text: text,
             filetype,
-            parsed_data
+            selected: 0,
+            parsed_data: vec![parsed_data],
+            data_count: 1,
         }
     }
 
     pub fn length(&self) -> usize {
         self.length
+    }
+
+    pub fn count(&self) -> usize {
+        self.data_count
     }
 
     pub fn data(&self) -> *const u32 {
@@ -97,7 +105,7 @@ impl Chunk {
     }
 
     pub fn keys(&self) -> Result<JsValue, JsValue> {
-        if let DataType::CsvStruct(csv) = &self.parsed_data {
+        if let DataType::CsvStruct(csv) = &self.parsed_data[self.selected] {
             let keys: Vec<String> = csv[0].keys().map(|s| s.to_string()).collect();
             Ok(JsValue::from_serde(&keys).unwrap())
         } else {
@@ -114,7 +122,7 @@ impl Chunk {
     }
 
     pub fn expose_key_int(&mut self, key: &str) -> *const u32 {
-        if let DataType::CsvStruct(csv) = &self.parsed_data {
+        if let DataType::CsvStruct(csv) = &self.parsed_data[self.selected] {
             self.coefficient = 1;
             let mut i = 0;
             let size = self.data.len() - 1;
@@ -136,7 +144,7 @@ impl Chunk {
     }
 
     pub fn expose_key_float(&mut self, key: &str) -> *const u32 {
-        if let DataType::CsvStruct(csv) = &self.parsed_data {
+        if let DataType::CsvStruct(csv) = &self.parsed_data[self.selected] {
             self.coefficient = 10;
             self.length = 0;
 
@@ -165,7 +173,7 @@ impl Chunk {
         let mut data: Vec<u32> = vec![];
         let mut count = 0;
 
-        if let DataType::CsvStruct(csv) = &self.parsed_data {
+        if let DataType::CsvStruct(csv) = &self.parsed_data[self.selected] {
             for record in csv {
                 let value = record.get(key).unwrap();
                 count += value.len();
@@ -183,12 +191,21 @@ impl Chunk {
         self.data.as_ptr()
     }
 
+    fn shift(&mut self, new_data: DataType) -> () {
+        self.parsed_data.push(new_data);
+        self.data_count += 1;
+    }
+
     // pub fn reset(&mut self) -> () {
     //     for num in &mut self.data { *num *= 2 }
     // }
 
     pub fn to_object(&self) -> Result<JsValue, JsValue> {
-        Ok(JsValue::from_serde(&self.parsed_data).unwrap())
+        Ok(JsValue::from_serde(&self.parsed_data[self.selected]).unwrap())
+    }
+
+    pub fn select(&mut self, index: usize ) -> () {
+        self.selected = index;
     }
 }
 
@@ -206,6 +223,20 @@ impl Dataworker {
         Ok(Chunk::new(
             url, text, filetype
         ))
+    }
+
+    pub async fn append(url: String, filetype: Filetype, mut chunk: Chunk) -> Result<Chunk, JsValue> {
+        let res = reqwest::Client::new()
+            .get(&url)
+            .send()
+            .await?;
+
+        let text = res.text().await?;
+
+        let parsed_data = read(&text, &filetype).unwrap();
+        chunk.shift(parsed_data);
+
+        Ok(chunk)
     }
 }
 
