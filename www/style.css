@@ -4,10 +4,8 @@ body {
 }
 
 .main {
-  padding-left: 24px;
   margin: auto;
-  max-width: 85%;
-
+  max-width: 1200px;
 }
 
 .container {
@@ -17,15 +15,13 @@ body {
 }
 
 .left {
-  width: 35%;
+  width: 336px;
   margin-right: 3em;
   margin-top: 20px;
 }
 
 .right {
-  width: 65%;
-  margin-right: 3em;
-  padding-left: 1.5em;
+  width: 816px;
   border-left: 2px solid black;
 }
 
@@ -42,6 +38,20 @@ body {
   background-color: #fff;
   border: 0px;
   pointer-events: none;
+}
+
+.legend-block {
+  width: 20px;
+  height: 20px;
+  margin: 10px 10px 10px 10px;
+}
+
+#legend {
+  display: flex;
+  align-items: center;
+  margin: auto;
+  margin-bottom: 20px;
+  width: 90%;
 }
 
 body {
@@ -140,4 +150,56 @@ button, h6  {
 
 h1, h2, h3, h4, h5, h6 {
   margin: 1rem;
+}
+
+.input {
+  margin-bottom: 24px;
+}
+
+.dropdown {
+  background-color: #FBFBF8;
+  font-family: 'Jost', sans-serif;
+	display: block;
+	font-size: 16px;
+  text-align: right;
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+  border: none;
+	border-bottom: 2px solid #000;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.dropdown::-ms-expand {
+	display: none;
+}
+.dropdown option {
+	font-weight:normal;
+  margin: .6em 1.4em .5em .8em;
+  text-align: right;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: #000;
+  outline: none;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #d1f4dd;
+  cursor: pointer;
+}
+.slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #d1f4dd;
+  cursor: pointer;
 }

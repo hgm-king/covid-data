@@ -3,25 +3,10 @@
   <head>
     <meta charset="utf-8">
     <title>Hello wasm-pack!</title>
-    <style>
-      .legend-block {
-        width: 20px;
-        height: 20px;
-        margin: 10px 10px 10px 10px;
-      }
-
-      #legend {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-        width: 100%;
-      }
-    </style>
     <link href="https://fonts.googleapis.com/css2?family=Jost&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
   </head>
   <body id="body">
-
     <main class="main">
       <div class="header">
         <h3>🦠NYC Covid Data🧼</h3>
@@ -29,11 +14,20 @@
       </div>
       <div class="container">
         <div class="left" id="data">
-          <select id="fields"></select>
+          <div class="input">
+            <label for="fields">FIELD:</label>
+            <select name="fields" id="fields" class="dropdown"></select>
+          </div>
+          <div class="input">
+            <label for="date">DATE:</label>
+            <input name="date" id="date-slider" class="slider" type="range">
+          </div>
           <div id="legend"></div>
-          <input type="range" id="date">
         </div>
         <div class="right" id="map">
+            <div class="loader" id="loader">
+              <h3>Loading ...</h3>
+            </div>
         </div>
       </div>
     </main>
