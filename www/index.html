@@ -13,7 +13,7 @@
         <h6>Created by <a href="https://github.com/HGHimself">HG King</a></h6>
       </div>
       <div class="container">
-        <div class="left" id="data">
+        <div class="left">
           <div class="input">
             <label for="fields">FIELD:</label>
             <select name="fields" id="fields" class="dropdown"></select>
@@ -23,10 +23,19 @@
             <input name="date" id="date-slider" class="slider" type="range">
           </div>
           <div id="legend"></div>
+          <div id="data"></div>
+          <br>
+          <div>
+            <p>This is a map of the publicly released NYC Covid data. You can find the original data <a href="https://github.com/nychealth/coronavirus-data">HERE</a>.</p>
+            <p>The data goes back for the past 30 days and updates automatically with the data source.</p>
+            <p>Faint light green sections of the map are major parks such as Central Park or Prospect Park.</p>
+            <p>The application is in its alpha release, so some features are not perfect. Percentages and Rates are <code>x10</code> in order to avoid decimals. This means <code>150</code> is <code>15.0%</code>.</p>
+          </div>
         </div>
         <div class="right" id="map">
             <div class="loader" id="loader">
               <h3>Loading ...</h3>
+              <h6><b id="loaded"></b>/<b id="loading"></b></h6>
             </div>
         </div>
       </div>
