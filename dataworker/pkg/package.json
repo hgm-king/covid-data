@@ -1,0 +1,15 @@
+{
+  "name": "dataworker",
+  "collaborators": [
+    "hg.king <hg_king@external.mckinsey.com>"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "dataworker_bg.wasm",
+    "dataworker.js",
+    "dataworker.d.ts"
+  ],
+  "module": "dataworker.js",
+  "types": "dataworker.d.ts",
+  "sideEffects": false
+}
