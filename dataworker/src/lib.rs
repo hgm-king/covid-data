@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 type Record = HashMap<String, String>;
 
-#[derive(Serialize)]
+#[derive(Serialize,Debug)]
 enum DataType {
     JsonStruct(Value),
     CsvStruct(Vec<Record>)
@@ -121,25 +121,42 @@ impl Chunk {
         sort
     }
 
+    // fn get_csv(&self) -> Result<&Vec<Record>, JsValue> {
+    //     if let DataType::CsvStruct(csv) = &self.parsed_data[self.selected] {
+    //         Ok(&csv)
+    //     } else {
+    //
+    //     }
+    // }
+
     pub fn expose_key_int(&mut self, key: &str) -> *const u32 {
         if let DataType::CsvStruct(csv) = &self.parsed_data[self.selected] {
+
             self.coefficient = 1;
             let mut i = 0;
             let size = self.data.len() - 1;
             for record in csv {
-                let value = record.get(key).unwrap().parse().unwrap();
-                if i <= size {
-                    self.data[i] = value;
-                    i += 1;
-                } else {
-                    self.length += 1;
-                    self.data.push(value);
+                let value = record.get(key);
+                match value {
+                    Some(v) => {
+                        let v = v.parse().unwrap();
+                        if i <= size {
+                            self.data[i] = v;
+                            i += 1;
+                        } else {
+                            self.length += 1;
+                            self.data.push(v);
+                        }
+                    },
+                    None => log("We have an error!")
                 }
             }
-        } else {
-            // Destructure failed. Change to the failure case.
-            println!("We could not turn this into an array!");
         }
+        else {
+            // Destructure failed. Change to the failure case.
+            log("We could not turn this into an array!");
+        }
+
         self.data.as_ptr()
     }
 
@@ -164,7 +181,7 @@ impl Chunk {
             }
         } else {
             // Destructure failed. Change to the failure case.
-            println!("We could not turn this into an array!");
+            log("We could not turn this into an array!");
         }
         self.data.as_ptr()
     }
@@ -184,7 +201,7 @@ impl Chunk {
             }
         } else {
             // Destructure failed. Change to the failure case.
-            println!("We could not turn this into an array!");
+            log("We could not turn this into an array!");
         }
         self.length = count;
         self.data = data;
