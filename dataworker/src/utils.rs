@@ -1,3 +1,9 @@
+pub type BoxError = std::boxed::Box<dyn
+	std::error::Error   // must implement Error to satisfy ?
+	+ std::marker::Send // needed for threads
+	+ std::marker::Sync // needed for threads
+>;
+
 pub fn set_panic_hook() {
     // When the `console_error_panic_hook` feature is enabled, we can call the
     // `set_panic_hook` function at least once during initialization, and then
